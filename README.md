@@ -1,5 +1,8 @@
 Read Me
 =
+
+Hey! This is Yuqi.
+
     This is a repo that is used as a dictionary for my code examples which are used in my past or previous games.
   
     In each folder, there will be one or a series of c# files about one topic,
