@@ -1,28 +1,34 @@
-﻿using System;
-using System.Collections;
+﻿/*
+ * This is a customized tool that provides the program with more control
+ * of their audios. The audio manager has two types of tracks. One is
+ * background music track, which is permanent. And the other is audio effect
+ * track, which is only been created when the effect is called and will destroy
+ * itself after the effect is finished.
+ * Other than the tracks that help the system to arrange audios. The audio
+ * manager provides easy access to change the volume, stop and resume the audio etc.
+ * The audio manager also provides event API related to audios.
+ */
+
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using TimeUtil;
 using UnityEngine;
-
 
 public class AudioManager
 {
+    /*
+     * The MonoBehavior class helps with the functions that need the Unity lifecycle.
+     * It will be auto-generated when the Manager initializes.
+     */
     internal class AudioManagerMonoBehaviour : MonoBehaviour
     {
         private AudioManager _parent;
-        private readonly SlowUpdate _su = new SlowUpdate(10);
-        
 
         void Update()
         {
-            if (_su.detect)
-            {
                  _CleanDeadSources();
                  _ClearAudioThatFinished();
-            }
-               
         }
 
         public void Init(AudioManager am)
@@ -54,7 +60,7 @@ public class AudioManager
         }
         
     }
-
+    
     private AudioManagerMonoBehaviour _audioManagerMonoBehaviour;
     public GameObject ea { get; private set; }
     public GameObject ba { get; private set; }
@@ -64,7 +70,6 @@ public class AudioManager
     
     public AudioManager()
     {
-        
         trackingPieces = new List<AudioPiece>(); 
         discardedPieces = new List<AudioPiece>();
         backgroundAudioTrack = new List<AudioSource>();
@@ -79,7 +84,7 @@ public class AudioManager
         _audioManagerMonoBehaviour = am.AddComponent<AudioManagerMonoBehaviour>();
         _audioManagerMonoBehaviour.Init(this);
         
-        //create seperate obj for storing the audio sources
+        //create separate obj for storing the audio sources
         ea = new GameObject();
         ea.name = "EffectAudioSources";
         ea.transform.parent = am.transform;
@@ -95,106 +100,70 @@ public class AudioManager
         
     }
 
-/*    public AudioSource PlayEffectAudio(string audioName, string path = "")
-    {
-        var clip = CreateAudioPiece(audioName,path);
-        var audioSource = _CreateNewAudioSource(audioName,true);
-        
-        audioSource.clip = clip;
-        audioSource.Play();
-        return audioSource;
-    }*/
+    
+    //public functions contains creating audioPieces and general adjustment of all the audios 
+    #region Public Functions
 
-/*    public AudioSource PlayEffectAudio(AudioClip clip)
-    {
-        var audioSource = _CreateNewAudioSource(clip.name, true);
-        
-        audioSource.clip = clip;
-        audioSource.Play();
-        return audioSource;
-    }
-
-    public AudioManager StopAllEffectAudio()
-    {
-        foreach (var audio in effectAudioSources)
-            audio.Stop();
-        return this;
-    }
-
-    public AudioManager StopEffectAudio(AudioSource source)
-    {
-        if (effectAudioSources.Contains(source))
+        public AudioPiece CreateAudioPiece(string audioName,string path = "", int trackNumber = -1)
         {
-            effectAudioSources.Remove(source);
-            source.Stop();
-            GameObject.Destroy(source.gameObject);
+            var clip = Resources.Load<AudioClip>("Audios/"+ path + audioName);
+            return CreateAudioPiece(clip, trackNumber);
         }
-        return this;
-    }
-
-    public AudioManager StopBackgroundAudio(int trackNumber)
-    {
-        backgroundAudioTrack[trackNumber].Stop();
-        return this;
-    }
-
-    public AudioManager PlayBackgroundAudio(int trackNumber,string audioName,string path = "")
-    {
-        var clip = CreateAudioPiece(audioName);
-        var audioSource = backgroundAudioTrack[trackNumber];
-        audioSource.clip = clip;
-        audioSource.Play();
-        return this;
-    }*/
-    
-    public AudioPiece CreateAudioPiece(string audioName,string path = "", int trackNumber = -1)
-    {
-        var clip = Resources.Load<AudioClip>("Audios/"+ path + audioName);
-        return CreateAudioPiece(clip, trackNumber);
-    }
-    
-    public AudioPiece CreateAudioPiece(AudioClip clip, int trackNumber = -1, bool isLoop = false)
-    {
-        return new AudioPiece(clip, trackNumber, isLoop);
-    }
-
-    public AudioPiece Play(AudioClip clip, int trackNumber = -1, bool isLoop = false)
-    {
-        var vp = CreateAudioPiece(clip, trackNumber,isLoop);
-        vp.Play();
-        return vp;
-    }
-
-    public AudioClip GetAudioClip(string audioName, string path = "")
-    {
-        return Resources.Load<AudioClip>("Audios/"+ path + audioName);
-    }
-
-    public void ChangeSoundEffectVolume(float toVolume)
-    {
-        foreach (var ap in trackingPieces.Where(o => o.trackNumber == -1))
-            ap.audioSource.volume = toVolume;
-
-    }
-
-    public void ChangeBGMVolume(float toVolume)
-    {
-        foreach (var ap in trackingPieces.Where(o => o.trackNumber != -1))
-            ap.audioSource.volume = toVolume;
-    }
-    
-    private AudioSource _CreateNewAudioSource(string name, GameObject parent, bool isLoop)
-    {
-        var newAudioObj = new GameObject();
-        newAudioObj.name = name + "AudioPlayer";
-        var audioSource = newAudioObj.AddComponent<AudioSource>();
-        newAudioObj.transform.parent = parent.transform;
-        audioSource.loop = isLoop;
         
-        return audioSource;
-    }
+        public AudioPiece CreateAudioPiece(AudioClip clip, int trackNumber = -1, bool isLoop = false)
+        {
+            return new AudioPiece(clip, trackNumber, isLoop);
+        }
+    
+        public AudioPiece Play(AudioClip clip, int trackNumber = -1, bool isLoop = false)
+        {
+            var vp = CreateAudioPiece(clip, trackNumber,isLoop);
+            vp.Play();
+            return vp;
+        }
+    
+        public AudioClip GetAudioClip(string audioName, string path = "")
+        {
+            return Resources.Load<AudioClip>("Audios/"+ path + audioName);
+        }
+    
+        public void ChangeSoundEffectVolume(float toVolume)
+        {
+            foreach (var ap in trackingPieces.Where(o => o.trackNumber == -1))
+                ap.audioSource.volume = toVolume;
+    
+        }
+    
+        public void ChangeBGMVolume(float toVolume)
+        {
+            foreach (var ap in trackingPieces.Where(o => o.trackNumber != -1))
+                ap.audioSource.volume = toVolume;
+        }
+
+    #endregion
+    
+    #region Private Functions
+
+        private AudioSource _CreateNewAudioSource(string name, GameObject parent, bool isLoop)
+        {
+            var newAudioObj = new GameObject();
+            newAudioObj.name = name + "AudioPlayer";
+            var audioSource = newAudioObj.AddComponent<AudioSource>();
+            newAudioObj.transform.parent = parent.transform;
+            audioSource.loop = isLoop;
+            
+            return audioSource;
+        }
+
+    #endregion
+    
 }
 
+/*
+ * The defined class that is used to store all the information
+ * about one audio clip and contain functions that is related
+ * to the adjustment of this audio clip.
+ */
 public class AudioPiece
 {
     public AudioPiece(AudioClip clip, int trackNumber = -1, bool isLoop = false)
@@ -207,15 +176,13 @@ public class AudioPiece
     public AudioClip audioClip { get; private set; }
     public AudioSource audioSource { get; private set; }
     public int trackNumber{ get; private set; }
-    public Action onAudioFinished;
     public bool playedOnce = false;
     public bool isLoop = false;
+    //event API
+    public Action onAudioFinished;
     
 
-    private GameObject _sourceParent
-    {
-        get { return trackNumber == -1 ? am.ea : am.ba; }
-    }
+    private GameObject _sourceParent => trackNumber == -1 ? am.ea : am.ba;
     private AudioManager am = Services.audioManager;
     
     public AudioPiece Play()
@@ -264,6 +231,12 @@ public class AudioPiece
     {
         if (ReferenceEquals(audioSource, null)) return this;
         audioSource.Play();
+        return this;
+    }
+
+    public AudioPiece ChangeVolume(float toVolume)
+    {
+        audioSource.volume = toVolume;
         return this;
     }
 }
