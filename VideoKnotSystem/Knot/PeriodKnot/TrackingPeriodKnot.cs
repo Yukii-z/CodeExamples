@@ -16,7 +16,7 @@ public class TrackingPeriodKnot : PeriodKnot
         parentVideo.Pause();
     }
 
-    protected override void _OnDisactive()
+    protected override void _OnInactive()
     {
         Services.videoManager.currentVideo?.mediaPlayer.Play();
     }

@@ -2,13 +2,9 @@
 using System.Collections.Generic;
 using RenderHeads.Media.AVProVideo;
 using UnityEngine;
-using UnityEngine.Serialization;
-using UnityEngine.Video;
 
-/// <summary>
-/// the event knot are simple, they only get triggered in a specific situation and runs OnActive
-/// nothing should usually be written in OnDisactive func
-/// </summary>
+// the event knot only get triggered in a specific situation and runs OnActive
+// nothing should usually be written in OnInactive func
 public class EventKnot : KnotManager.Knot
 {
 

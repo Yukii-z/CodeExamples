@@ -12,7 +12,7 @@ public class NewLayerPeriodKnot : PeriodKnot
             obj.SetActive(true);
     }
 
-    protected override void _OnDisactive()
+    protected override void _OnInactive()
     {
         foreach (var obj in ableLayer)
             obj.SetActive(true);
@@ -29,7 +29,7 @@ public class NewLayerPeriodKnot : PeriodKnot
     public override void OnDisactiveInEditor()
     {
         base.OnDisactiveInEditor();
-        _OnDisactive();
+        _OnInactive();
     }
 
     #endregion

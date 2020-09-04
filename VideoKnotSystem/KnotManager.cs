@@ -1,11 +1,15 @@
-﻿using System;
+﻿/*
+ * Knot Manager is used to track and manage all the knots that are related to
+ * the current playing video.
+ */
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using HieracheyUtil;
 using RenderHeads.Media.AVProVideo;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Video;
 
 public enum knotAppearType
 {
@@ -14,70 +18,139 @@ public enum knotAppearType
     basedOnTime,
 }
 
-public enum knotTriggerType
-{
-    immediateActive,
-    mouseTrigger
-}
-
 public class KnotManager
 {
+    private List<Knot> _trackingKnot = new List<Knot>();
+    private List<Knot> _bufferAddKnotList = new List<Knot>();
+    private List<Knot> _bufferDeleteKnotList = new List<Knot>();
+    private Video? _currentVideo => Services.videoManager.currentVideo;
+    private float _lastFrameVideoTime = 0f;
+    
+    
+    public KnotManager SetVideoKnotsTrack(Video video)
+    {
+        foreach (var knot in video.knotList)
+            knot.SetTrack();
+        return this;
+    }
+
+    public KnotManager SetVideoKnotsInactive(Video video)
+    {
+        foreach (var knot in video.knotList)
+            knot.SetDisactive();
+        return this;
+    }
+
+    public KnotManager SetVideoKnotsUnTrack(Video video)
+    {
+        foreach (var knot in video.knotList)
+            knot.SetUnTrack();
+        return this;
+    }
+
+    #region Lifecycle
+
+        public void Update()
+        {
+            //if the game pause, the this update should not happen
+            if(Services.applicationController.isGamePaused) return;
+            
+            var videoTime = _currentVideo?.mediaPlayer.Control.GetCurrentTimeMs() / 1000f;
+    
+            _PrepareTrackingKnot();
+            foreach (var knot in _trackingKnot)
+            {
+                if (knot.GetType().IsSubclassOf(typeof(PeriodKnot)))
+                {
+                    PeriodKnot typeKnot = knot as PeriodKnot;
+                    if (typeKnot.appearType != knotAppearType.basedOnVideo) continue;
+                    if ((typeKnot.activePosition < videoTime && typeKnot.activePosition >= _lastFrameVideoTime) ||
+                        (typeKnot.disactivePosition > videoTime && typeKnot.disactivePosition <= _lastFrameVideoTime) ||
+                        (typeKnot.activePosition == 0f && videoTime < typeKnot.disactivePosition && !typeKnot.isActive) ||
+                        (typeKnot.disactivePosition == typeKnot.parentVideo.mediaPlayer.Info.GetDurationMs() && videoTime > typeKnot.activePosition && !typeKnot.isActive))
+                    {
+                        typeKnot.SetActive();
+                    }
+    
+                    if ((typeKnot.activePosition >= videoTime && typeKnot.activePosition < _lastFrameVideoTime) ||
+                        (typeKnot.disactivePosition <= videoTime && typeKnot.disactivePosition > _lastFrameVideoTime))
+                    {
+                        typeKnot.SetInactive();
+                    }
+                }
+    
+                if (knot.GetType().IsSubclassOf(typeof(EventKnot)))
+                {
+                    EventKnot typeKnot = knot as EventKnot;
+                    if (typeKnot.appearType != knotAppearType.basedOnVideo) continue;
+                    if (typeKnot.knotActPosition == 0f) Debug.Log(typeKnot + " has the video position set to 0!");
+                    if (typeKnot.knotActPosition <= videoTime && typeKnot.knotActPosition > _lastFrameVideoTime)
+                    {
+                        typeKnot.SetActive();
+                    }
+                }
+    
+                knot.SetUpdate();
+            }
+    
+            _PrepareTrackingKnot();
+    
+            _lastFrameVideoTime = (float) videoTime;
+        }
+    
+        public void Clear()
+        {
+            foreach (var knot in _trackingKnot)
+                knot.SetInactive().SetUnTrack();
+            _trackingKnot.Clear();
+            _bufferAddKnotList.Clear();
+            _bufferDeleteKnotList.Clear();
+        }
+
+    #endregion
+    
+    private void _PrepareTrackingKnot()
+    {
+        for (int i = 0; i < _bufferAddKnotList.Count; i++)
+            _trackingKnot.Add(_bufferAddKnotList[i]);
+        for (int i = 0; i < _bufferDeleteKnotList.Count; i++)
+        {
+            if (!_trackingKnot.Contains(_bufferDeleteKnotList[i])) continue;
+            _trackingKnot.Remove(_bufferDeleteKnotList[i]);
+        }
+
+        _bufferAddKnotList.Clear();
+        _bufferDeleteKnotList.Clear();
+    }
+    
     public class Knot : MonoBehaviour
     {
-        protected MediaPlayer _mp
-        {
-            get { return parentVideo.mediaPlayer; }
-        }
+        protected MediaPlayer _mp => parentVideo.mediaPlayer;
+        protected KnotManager _km => Services.knotManager;
+        
 
-        protected KnotManager _km
-        {
-            get { return Services.knotManager; }
-        }
+        [HideInInspector]
+        public string parentVideoName;
+        public Video parentVideo => Services.videoManager.GetVideo(parentVideoName);
 
-        [HideInInspector] public string parentVideoName;
-
-        public Video parentVideo
-        {
-            get { return Services.videoManager.GetVideo(parentVideoName); }
-        }
-
-        [HideInInspector] public bool isTracking { get; private set; }
+        [HideInInspector]
+        public bool isTracking { get; private set; }
         public bool isActive;
 
         protected List<Coroutine> _activeRoutine = new List<Coroutine>();
-        
+        public List<Coroutine> activeRoutine => _activeRoutine;
 
-        public List<Coroutine> activeRoutine
-        {
-            get { return _activeRoutine; }
-        }
-        
         protected List<Coroutine> _trackRoutine = new List<Coroutine>();
-        public List<Coroutine> trackRoutine
-        {
-            get { return _trackRoutine; }
-        }
-
-        /// <summary>
-        /// These functions should be defined for all subclasses of knot
-        /// They shall  not necessary for the sub-subclasses unless it is needed
-        /// </summary>
-        protected virtual void _OnTrackBegin()
-        {
-        }
-
-        protected virtual void _OnUntrack()
-        {
-        }
+        public List<Coroutine> trackRoutine => _trackRoutine;
 
         public Knot SetUnTrack()
         {
             if (!isTracking) return this;
-            if (!_km.trackingKnot.Contains(this)) return this;
+            if (!_km._trackingKnot.Contains(this)) return this;
 
             _OnUntrack();
             isTracking = false;
-            _km.bufferDeleteKnotList.Remove(this);
+            _km._bufferDeleteKnotList.Remove(this);
             foreach (var coroutine in _trackRoutine)
             {
                 if (!object.Equals(coroutine, null)) StopCoroutine(coroutine);
@@ -88,28 +161,8 @@ public class KnotManager
         public Knot SetTrack()
         {
             if (isTracking) return this;
-            /*//HotSpot register
-            if (knot.GetType().IsSubclassOf(typeof(PeriodKnot)))
-            {
-                PeriodKnot typeKnot = knot as PeriodKnot;
-                if (typeKnot.parentVideo == video)
-                {
-                    trackingKnot.Add(knot);
-                    knot.OnRegister();
-                }
-            }
-
-            //EventKnot register
-            if (knot.GetType().IsSubclassOf(typeof(EventKnot)))
-            {
-                EventKnot typeKnot = knot as EventKnot;
-                if (typeKnot.parentVideo == video)
-                {
-                    trackingKnot.Add(knot);
-                    knot.OnRegister();
-                }
-            }*/
-            _km.bufferAddKnotList.Add(this);
+            
+            _km._bufferAddKnotList.Add(this);
             isTracking = true;
             _OnTrackBegin();
             return this;
@@ -122,26 +175,7 @@ public class KnotManager
             _OnUpdate();
             return this;
         }
-
-        protected virtual void _OnUpdate()
-        {
-        }
-
-        /// <summary>
-        /// These functions should be defined in the sub-subclasses of knot
-        /// since that is the place for defining the actual behavior of the knots
-        /// Both of them should be something that being called once in a while
-        /// OnDisactive should be called before the knot being set to not active
-        /// further logic should be defined in Update and other functions
-        /// </summary>
-        protected virtual void _OnActive()
-        {
-        }
-
-        protected virtual void _OnDisactive()
-        {
-        }
-
+        
         // has to include isActive = true
         public Knot SetActive()
         {
@@ -156,7 +190,7 @@ public class KnotManager
         }
 
         // has to include isActive = false
-        public Knot SetDisactive()
+        public Knot SetInactive()
         {
             if (!isTracking || !isActive) return this;
 
@@ -168,15 +202,12 @@ public class KnotManager
             Services.eventManager.RemoveHandler<PointerIn>(OnPointerIn);
             Services.eventManager.RemoveHandler<PointerOut>(OnPointerOut);
             isActive = false;
-            _OnDisactive();
+            _OnInactive();
             return this;
         }
-
-        /// <summary>
-        /// for event system
-        /// </summary>
-        /// <param name="e"></param>
-        protected virtual void OnPointerIn(PointerIn e)
+        
+        // for event system
+        protected void OnPointerIn(PointerIn e)
         {
             if (Services.applicationController.isGamePaused) return;
             if (!isTracking || !isActive) return;
@@ -184,12 +215,40 @@ public class KnotManager
             _OnKnotPointerIn();
         }
 
-        protected virtual void OnPointerOut(PointerOut e)
+        protected void OnPointerOut(PointerOut e)
         {
             if (Services.applicationController.isGamePaused) return;
             if (!isTracking || !isActive) return;
             if (e.collidedObj != gameObject) return;
             _OnKnotPointerOut();
+        }
+        
+        // These functions should be defined for all subclasses of knot
+        ///They shall not be necessary for the sub-subclasses unless it is needed
+        protected virtual void _OnTrackBegin()
+        {
+        }
+
+        protected virtual void _OnUntrack()
+        {
+        }
+        
+        // These functions should be defined in the sub-subclasses of knot
+        // since that is the place for defining the actual behavior of the knots
+        // Both of them should be something that being called once in a while
+        // OnDisactive should be called before the knot being set to not active
+        // further logic should be defined in Update and other functions
+        
+        protected virtual void _OnUpdate()
+        {
+        }
+
+        protected virtual void _OnActive()
+        {
+        }
+
+        protected virtual void _OnInactive()
+        {
         }
 
         protected virtual void _OnKnotPointerOut()
@@ -270,113 +329,5 @@ public class KnotManager
         }
 
         #endregion
-    }
-
-    public List<Knot> trackingKnot = new List<Knot>();
-    public List<Knot> bufferAddKnotList = new List<Knot>();
-    public List<Knot> bufferDeleteKnotList = new List<Knot>();
-
-    public KnotManager SetVideoKnotsTrack(Video video)
-    {
-        foreach (var knot in video.knotList)
-            knot.SetTrack();
-        return this;
-    }
-
-    public KnotManager SetVideoKnotsDisactive(Video video)
-    {
-        foreach (var knot in video.knotList)
-            knot.SetDisactive();
-        return this;
-    }
-
-    public KnotManager SetVideoKnotsUnTrack(Video video)
-    {
-        foreach (var knot in video.knotList)
-            knot.SetUnTrack();
-        return this;
-    }
-
-    private void _PrepareTrackingKnot()
-    {
-        for (int i = 0; i < bufferAddKnotList.Count; i++)
-            trackingKnot.Add(bufferAddKnotList[i]);
-        for (int i = 0; i < bufferDeleteKnotList.Count; i++)
-        {
-            if (!trackingKnot.Contains(bufferDeleteKnotList[i])) continue;
-            trackingKnot.Remove(bufferDeleteKnotList[i]);
-        }
-
-        bufferAddKnotList.Clear();
-        bufferDeleteKnotList.Clear();
-    }
-
-    private Video? _currentVideo
-    {
-        get { return Services.videoManager.currentVideo; }
-    }
-
-    private float _lastFrameVideoTime = 0f;
-
-    public void Init()
-    {
-    }
-
-    public void Update()
-    {
-        //if the game pause, the this update should not happen
-        if(Services.applicationController.isGamePaused) return;
-        
-        var videoTime = _currentVideo?.mediaPlayer.Control.GetCurrentTimeMs() / 1000f;
-
-        _PrepareTrackingKnot();
-        foreach (var knot in trackingKnot)
-        {
-            //hotspot tracking
-            if (knot.GetType().IsSubclassOf(typeof(PeriodKnot)))
-            {
-                PeriodKnot typeKnot = knot as PeriodKnot;
-                if (typeKnot.appearType != knotAppearType.basedOnVideo) continue;
-                if ((typeKnot.activePosition < videoTime && typeKnot.activePosition >= _lastFrameVideoTime) ||
-                    (typeKnot.disactivePosition > videoTime && typeKnot.disactivePosition <= _lastFrameVideoTime) ||
-                    (typeKnot.activePosition == 0f && videoTime < typeKnot.disactivePosition && !typeKnot.isActive) ||
-                    (typeKnot.disactivePosition == typeKnot.parentVideo.mediaPlayer.Info.GetDurationMs() && videoTime > typeKnot.activePosition && !typeKnot.isActive))
-                {
-                    typeKnot.SetActive();
-                }
-
-                if ((typeKnot.activePosition >= videoTime && typeKnot.activePosition < _lastFrameVideoTime) ||
-                    (typeKnot.disactivePosition <= videoTime && typeKnot.disactivePosition > _lastFrameVideoTime))
-                {
-                    typeKnot.SetDisactive();
-                }
-            }
-
-            if (knot.GetType().IsSubclassOf(typeof(EventKnot)))
-            {
-                EventKnot typeKnot = knot as EventKnot;
-                if (typeKnot.appearType != knotAppearType.basedOnVideo) continue;
-                if (typeKnot.knotActPosition == 0f) Debug.Log(typeKnot + " has the video position set to 0!");
-                if (typeKnot.knotActPosition <= videoTime && typeKnot.knotActPosition > _lastFrameVideoTime)
-                {
-                    typeKnot.SetActive();
-                }
-            }
-
-            knot.SetUpdate();
-        }
-
-        _PrepareTrackingKnot();
-
-        _lastFrameVideoTime = (float) videoTime;
-    }
-
-    public void Clear()
-    {
-        foreach (var knot in trackingKnot)
-            knot.SetDisactive().SetUnTrack();
-        trackingKnot.Clear();
-        bufferAddKnotList.Clear();
-        bufferDeleteKnotList.Clear();
     }
 }

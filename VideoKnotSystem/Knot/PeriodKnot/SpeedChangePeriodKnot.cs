@@ -20,7 +20,7 @@ public class SpeedChangePeriodKnot : PeriodKnot
         if(!Services.applicationController.isGamePaused) {NormalSpeed();}
     }
 
-    protected override void _OnDisactive()
+    protected override void _OnInactive()
     {
         NormalSpeed();
     }

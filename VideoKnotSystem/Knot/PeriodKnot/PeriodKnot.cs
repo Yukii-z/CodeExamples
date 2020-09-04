@@ -5,10 +5,8 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.Video;
 
-/// <summary>
-/// The hot spots are used for events that happens in one period of the time of a video
-/// They might have more complicated logic
-/// </summary>
+// The hot spots are used for events that happens in one period of the time of a video
+// They might have more complicated logic
 
 public abstract class PeriodKnot : KnotManager.Knot
 {
@@ -38,7 +36,7 @@ public abstract class PeriodKnot : KnotManager.Knot
                 }, activePosition));
                 _activeRoutine.Add(CoroutineManager.DoDelayCertainSeconds(delegate()
                 {
-                    SetDisactive();
+                    SetInactive();
                 }, disactivePosition));
                 break;
         }

@@ -59,7 +59,7 @@ public class ZoomInPeriodKnot : PeriodKnot
         }
     }
 
-    protected override void _OnDisactive()
+    protected override void _OnInactive()
     {
         _mp.gameObject.transform.localScale = oriVideoScale;
         _mp.gameObject.transform.localPosition = oriVideoCenter;

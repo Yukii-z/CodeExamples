@@ -17,7 +17,7 @@ public class NextVideoPeriodKnot : PeriodKnot
         Services.visualEffectManager.unfocusedCam.AddTrackingObj(gameObject);
     }
 
-    protected override void _OnDisactive()
+    protected override void _OnInactive()
     {
         Services.visualEffectManager.unfocusedCam.RemoveTrackingObj(gameObject);
     }
