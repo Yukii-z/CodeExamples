@@ -1,7 +1,6 @@
-﻿/*
- * Knot Manager is used to track and manage all the knots that are related to
- * the current playing video.
- */
+﻿//Knot Manager is used to track and manage all the knots that are related to
+//the current playing video.
+
 
 using System;
 using System.Collections;

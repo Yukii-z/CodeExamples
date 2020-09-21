@@ -110,13 +110,6 @@ public class VideoEditor : EditorWindow
                     }
                     if (!ReferenceEquals(_targetVideoObj,null))
                     {
-//                        if(!_targetedMediaPlayer) _InitTargetVideo();
-//                        if (!_targetedMediaPlayer.VideoOpened)
-//                        {
-//                            EditorGUILayout.LabelField("Video Preparing");
-//                            return;
-//                        }
-    
                         GUILayout.Space(20);
                         EditorGUILayout.LabelField("Video Play");
                         GUILayout.Space(20);
@@ -138,24 +131,6 @@ public class VideoEditor : EditorWindow
                         EditorGUILayout.LabelField((_targetedMediaPlayer.Info.GetDurationMs() / 1000f).ToString("f2"));
                         GUI.skin.label.alignment = TextAnchor.MiddleLeft;
                         _videoPos = EditorGUILayout.Slider(_videoPos, 0f, (float) _targetedMediaPlayer.Info.GetDurationMs() / 1000f);
-    
-//                        if (!_isPlaying)
-//                        {
-//                            if (GUILayout.Button("Play"))
-//                                //_isPlaying = true;
-//                                _targetedMediaPlayer.Control.Play();
-//    
-//                            EditorGUILayout.LabelField("Video Frame Rate");
-//                            _frameRate = Mathf.RoundToInt(EditorGUILayout.Slider(_frameRate, 0f, 100f));
-//                            _isPlayedBackward = EditorGUILayout.Toggle("Play Backward", _isPlayedBackward);
-//                        }
-    
-//                        if (_isPlaying)
-//                        {
-//                            if (GUILayout.Button("Pause"))
-//                                //_isPlaying = false;
-//                                _targetedMediaPlayer.Control.Pause();
-//                        }
                     }
     
                     break;
@@ -175,7 +150,6 @@ public class VideoEditor : EditorWindow
     
         private void Update()
         {
-            //if(EditorApplication.isPlayingOrWillChangePlaymode) GetWindow<VideoEditor>().Close();
             if (_isTargetVideoChanged())
             {
                 _CleanData(SceneManager.GetActiveScene());
@@ -184,16 +158,6 @@ public class VideoEditor : EditorWindow
             _playerLastFrame = _targetedMediaPlayer;
     
             _CheckKnotActivation();
-    
-            if (_isPlaying)
-            {
-                //_targetedMediaPlayer.Control.Play();
-                //_PlayVideo();
-            }
-    
-//            if (_targetedMediaPlayer != null)
-//                _targetedMediaPlayer.Control.Seek(_videoPos * 1000f);
-    
         }
     
         private void OnInspectorUpdate()
@@ -251,10 +215,6 @@ public class VideoEditor : EditorWindow
         {
             if (_targetedMediaPlayer.VideoOpened) return;
             _targetedMediaPlayer.OpenVideoFromFile(_targetedMediaPlayer.m_VideoLocation,  _targetedMediaPlayer.m_VideoPath,false);
-            //if(_targetVideoObj.GetComponent<MediaPlayer>()) return;
-            //var player = _targetVideoObj.GetComponent
-            //player.clip = _targetVideoObj.GetComponent<Type_Video>();
-            //player.Prepare();
         }
     }
 
@@ -278,21 +238,6 @@ public class VideoEditor : EditorWindow
         _lineMono.isUpdate = true;
     }
     private double lastFrameTime = 0f;
-
-/*    private void _PlayVideo()
-    {
-        if (su.detect)
-        {
-            if (lastFrameTime == 0d) lastFrameTime = EditorApplication.timeSinceStartup;
-            var speed = (float) (EditorApplication.timeSinceStartup - lastFrameTime) * (float) _frameRate / 24f;
-            _videoPos += !_isPlayedBackward ? speed : -speed;
-            lastFrameTime = EditorApplication.timeSinceStartup;
-        }
-
-        if ((ulong) _targetedMediaPlayer.time >= _targetedMediaPlayer.clip.length - 0.1f ||
-            _targetedMediaPlayer.frame <= 0)
-            _isPlaying = false;
-    }*/
 
     private List<KnotManager.Knot> _RefreshKnot(GameObject targetVideoObj)
     {
@@ -451,7 +396,6 @@ public class VideoEditor : EditorWindow
                 var startPos = link.startVideo.headObj.transform.position;
                 var endPos = link.endVideo.headObj.transform.position;
                 
-                //Gizmos.color = new Color(UnityEngine.Random.Range(0,255)/255f,UnityEngine.Random.Range(0,255)/255f,UnityEngine.Random.Range(0,255)/255f);
                 Gizmos.color = lineColor;
                 
                 if(isLineHide) return;
@@ -493,7 +437,6 @@ public class VideoEditor : EditorWindow
     [DrawGizmo(GizmoType.Selected | GizmoType.NonSelected)]
     static void OnDrawGizmos(MonoGizmo scr, GizmoType gizmoType)
     {
-        //DrawSequenceLine(scr._videoList, scr._videoLink, scr.lineColor, scr.renderType);
         if (!scr.isLineHide)
         {
             scr.DrawSequenceLine();

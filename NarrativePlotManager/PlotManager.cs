@@ -46,8 +46,6 @@ public class PlotManager
             _ParsePlotInfo();
 
             _baseTime = DateTime.Now;
-            //TODO: clear notification
-            //UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
         }
         
     public void Update()
@@ -81,13 +79,7 @@ public class PlotManager
         }
     }
 
-    public void Clear()
-    {
-        //save all the list of plots
-        //save all the plot start time
-        //TODO
-        //add notification
-    }
+    public void Clear(){}
 
     #endregion
 
@@ -95,9 +87,6 @@ public class PlotManager
 
          public void ClearCalendar()
         {
-            //including save and clean data
-            //save TODO
-            //clean
             Calendar.Clear();
         }
          
@@ -126,12 +115,8 @@ public class PlotManager
     #endregion
 
     #region Save & Load
-
-    /// <summary>
-    /// all these happen without plotmanager update
-    /// </summary>
-    /// <param name="jsonObject"></param>
-    /// <returns></returns>
+    
+        // All these happen without plotmanager update
         public JSONObject Save(JSONObject jsonObject)
         {
             var plotJsonObj = new JSONObject();

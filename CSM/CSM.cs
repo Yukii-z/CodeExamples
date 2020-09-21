@@ -61,16 +61,6 @@ public class CSM<TContext, V> where TContext : class where V : Info
 
     public Dictionary<Enum, StateBehavior> _stateBehavior = new Dictionary<Enum, StateBehavior>();
 
-    /*public void AddBehavior<TState>() where TState : StateBehavior
-    {
-        //var newState =(TState) Activator.CreateInstance(typeof(TState),enumId);
-        var newState = Activator.CreateInstance<TState>();
-        Debug.Assert(!object.Equals(newState.enumId,default(Enum)), "One state class doesnt has it's defined enumId'");
-        _stateBehavior.Add(newState.enumId, newState);
-        newState.Parent = this;
-        newState.Init();
-    }*/
-
     // We keep track of the state machine's current state and expose it through a public
     // property in case someone needs to query it.
     public V CurrentState { get; private set; }
@@ -176,9 +166,6 @@ public class CSM<TContext, V> where TContext : class where V : Info
         {
             // This activator business is required to create instances of states
             // using only the type
-            //var newState = Activator.CreateInstance<TState>();
-            //newState.Parent = this;
-            //newState.Init();
             _stateCache[newState.id] = newState;
             return newState;
         }
@@ -210,15 +197,6 @@ public class CSM<TContext, V> where TContext : class where V : Info
     public abstract class StateBehavior
     {
         public Enum enumId;
-
-/*
-        protected StateBehavior(Enum enumId)
-        {
-            this.enumId = enumId;
-        }
-        
-
-        protected StateBehavior(){}*/
 
         internal CSM<TContext, V> Parent { get; set; }
 

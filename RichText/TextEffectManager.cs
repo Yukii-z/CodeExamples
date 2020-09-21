@@ -79,8 +79,6 @@ public class TextEffectManager
                                  targetedString = operateString,
                              });
             }
-            
-            //_PrintString(splitSentenceList);
         }
         return ListToString(splitSentenceList);
     }
@@ -121,7 +119,6 @@ public class TextEffectManager
         if (!testString.StartsWith("[") || !testString.EndsWith("]")) return false;
         
         var tagStr = testString.Substring(1, testString.Length - 2).Trim();
-        //var tagElement = tagStr.Split(" "[0],',').ToList();
         var tagElement = tagStr.Split(" "[0]).ToList();
         
         tagName = tagElement[0].Trim();
@@ -135,9 +132,6 @@ public class TextEffectManager
         if (tagName.StartsWith("'"))
         {
             tagName = tagName.Substring(1);
-            //Type type = Type.GetType(tagName);
-            //Debug.Assert(Type.GetType(tagName) != null && Type.GetType(tagName).IsSubclassOf(typeof(Tag)), tagName + " is not a defined tag class");
-            //tagInstance = ReferenceEquals(Type.GetType(tagName),null)? (Tag) Activator.CreateInstance(Type.GetType(tagName)) : null;
             isStart = false;
         }
         else
@@ -152,10 +146,6 @@ public class TextEffectManager
                 if (attribute.ContainsKey(pair[0].Trim())) attribute[pair[0].Trim()] = parameter;
                 else attribute.Add(pair[0].Trim(),parameter);
             }
-            //Type type = Type.GetType(tagName);
-            //Debug.Assert(Type.GetType(tagName) != null && Type.GetType(tagName).IsSubclassOf(typeof(Tag)), tagName + " is not a defined tag class");
-            //tagInstance = !ReferenceEquals(Type.GetType(tagName),null)? (Tag) Activator.CreateInstance(Type.GetType(tagName)) : null;
-            //tagInstance?.Init(attribute);
             isStart = true;
         }
 
