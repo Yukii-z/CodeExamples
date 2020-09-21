@@ -121,10 +121,16 @@ public class TextEffectManager
         if (!testString.StartsWith("[") || !testString.EndsWith("]")) return false;
         
         var tagStr = testString.Substring(1, testString.Length - 2).Trim();
-        var tagElement = tagStr.Split(" "[0],',').ToList();
+        //var tagElement = tagStr.Split(" "[0],',').ToList();
+        var tagElement = tagStr.Split(" "[0]).ToList();
         
         tagName = tagElement[0].Trim();
         tagElement.Remove(tagElement[0]);
+        
+        string elementString = String.Empty;
+        foreach (var element in tagElement)
+            elementString += element;
+        tagElement = tagStr.Split(',').ToList();
         
         if (tagName.StartsWith("'"))
         {
@@ -141,8 +147,9 @@ public class TextEffectManager
                 element.Trim();
                 var pair = element.Split("="[0]);
                 Debug.Assert(pair[1].Trim().StartsWith("\"") && pair[1].Trim().EndsWith("\""),pair[1] + " is not a correct input parameter");
+                //delete the "" around parameter
                 var parameter = pair[1].Trim().Substring(1, pair[1].Trim().Length - 2).Trim();
-                if (attribute.ContainsKey(pair[0])) attribute[pair[0]] = parameter;
+                if (attribute.ContainsKey(pair[0].Trim())) attribute[pair[0].Trim()] = parameter;
                 else attribute.Add(pair[0].Trim(),parameter);
             }
             //Type type = Type.GetType(tagName);
